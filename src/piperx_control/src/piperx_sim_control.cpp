@@ -16,7 +16,7 @@ void PiperXSimControl::publish_joint_command()
 
   msg.name = {"joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "gripper_joint1", "gripper_joint2"};
 
-  msg.position = {0.0, 0.373, -1.283, 1.315, 0.0, 0.0, 0.0, 0.0};
+  msg.position = {0.0, 0.373, -1.283, 1.315, 0.0, 0.0, 0.050, -0.050};
 
   publisher_->publish(msg);
 }
