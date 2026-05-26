@@ -8,6 +8,8 @@ import cv2.aruco as aruco
 from cv_bridge import CvBridge
 from rclpy.node import Node
 from sensor_msgs.msg import Image, CameraInfo
+from geometry_msgs.msg import PoseStamped
+from scipy.spatial.transform import Rotation
 
 
 class ArucoSimDetector(Node):
@@ -33,15 +35,20 @@ class ArucoSimDetector(Node):
             10
         )
 
-        self.subscription = self.create_subscription(
+        self.image_sub = self.create_subscription(
             Image,
             "/isaac/rgb_raw",
             self.image_callback,
             10
         )
 
+        self.pose_pub = self.create_publisher(
+            PoseStamped,
+            "/aruco/marker_pose",
+            10
+        )
+
         self.get_logger().info("Aruco sim detector started.")
-        self.get_logger().info("Subscribing to /isaac/rgb_raw and /isaac/camera_info")
 
     def camera_info_callback(self, msg):
         self.camera_matrix = np.array(msg.k).reshape((3, 3))
@@ -54,6 +61,10 @@ class ArucoSimDetector(Node):
         self.printed_camera_info = True
 
     def image_callback(self, msg):
+        if self.camera_matrix is None:
+            self.get_logger().warn("Waiting for /isaac/camera_info...")
+            return
+        
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
 
         debug_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -78,19 +89,36 @@ class ArucoSimDetector(Node):
             self.dist_coeffs
         )
 
-        for i, marker_id in enumerate(ids.flatten()):
-            rvec = rvecs[i][0]
-            tvec = tvecs[i][0]
+        marker_id = detected_ids[0]
+        rvec = rvecs[0][0]
+        tvec = tvecs[0][0]
 
-            self.get_logger().info(
-                f"Marker {marker_id} tvec in camera optical frame: "
-                f"x={tvec[0]:.4f} m, y={tvec[1]:.4f} m, z={tvec[2]:.4f} m"
-            )
+        self.publish_marker_pose(marker_id, rvec, tvec, msg)
 
-            self.get_logger().info(
-                f"Marker {marker_id} rvec: "
-                f"rx={rvec[0]:.4f}, ry={rvec[1]:.4f}, rz={rvec[2]:.4f}"
-            )
+    def publish_marker_pose(self, marker_id, rvec, tvec, image_msg):
+        rotation_matrix, _ = cv2.Rodrigues(rvec)
+        quat = Rotation.from_matrix(rotation_matrix).as_quat()
+
+        pose_msg = PoseStamped()
+
+        pose_msg.header.stamp = image_msg.header.stamp
+        pose_msg.header.frame_id = image_msg.header.frame_id
+
+        pose_msg.pose.position.x = tvec[0]
+        pose_msg.pose.position.y = tvec[1]
+        pose_msg.pose.position.z = tvec[2]
+
+        pose_msg.pose.orientation.x = quat[0]
+        pose_msg.pose.orientation.y = quat[1]
+        pose_msg.pose.orientation.z = quat[2]
+        pose_msg.pose.orientation.w = quat[3]
+
+        self.pose_pub.publish(pose_msg)
+
+        self.get_logger().info(
+            f"Published marker {marker_id} pose to /aruco/marker_pose"
+        )
+  
 
 
 def main(args=None):
