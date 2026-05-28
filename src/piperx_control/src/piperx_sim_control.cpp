@@ -2,39 +2,61 @@
 
 PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 {
-  publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("/isaac_joint_command", 10);
-
-  timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&PiperXSimControl::publish_scan_pose_once, this));
-
-  RCLCPP_INFO(this->get_logger(), "Node started. Will publish scan pose once after 1 second.");}
-
-void PiperXSimControl::publish_joint_command()
-{
-  sensor_msgs::msg::JointState msg;
-
-  msg.header.stamp = this->now();
-
-  msg.name = {"joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "gripper_joint1", "gripper_joint2"};
-
-  msg.position = {0.0, 0.373, -1.283, 1.315, 0.0, 0.0, 0.050, -0.050};
-
-  publisher_->publish(msg);
+  RCLCPP_INFO(this->get_logger(), "Control node has started......");
 }
 
-void PiperXSimControl::publish_scan_pose_once()
+void PiperXSimControl::mainJointMovement()
 {
-  this->publish_joint_command();
+  arm_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
+            shared_from_this(), "arm");
 
-  RCLCPP_INFO(this->get_logger(), "Published scan pose once.");
+  gripper_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
+            shared_from_this(), "gripper");
 
-  timer_->cancel();
+  moveArmJoints(scan_pose_joints_);
+
+  moveGripperJoints(gripper_open_joints_);
+}
+
+void PiperXSimControl::moveArmJoints(const std::vector<double> & joint_angles)
+{
+  arm_group_->setJointValueTarget(joint_angles);
+
+  if (arm_group_->plan(arm_plan_) == moveit::core::MoveItErrorCode::SUCCESS)
+  {
+    arm_group_->execute(arm_plan_);
+  }
+  else 
+  {
+    RCLCPP_INFO(this->get_logger(), "Arm plan failed");
+  }
+}
+
+void PiperXSimControl::moveGripperJoints(const std::vector<double> & joint_angles)
+{
+  gripper_group_->setJointValueTarget(joint_angles);
+
+  if (gripper_group_->plan(gripper_plan_) == moveit::core::MoveItErrorCode::SUCCESS)
+  {
+    gripper_group_->execute(gripper_plan_);
+  }
+  else 
+  {
+    RCLCPP_INFO(this->get_logger(), "Gripper plan failed");
+  }
 }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
+
   auto node = std::make_shared<PiperXSimControl>();
+
+  node->mainJointMovement();
+
   rclcpp::spin(node);
+
   rclcpp::shutdown();
+  
   return 0;
 }
