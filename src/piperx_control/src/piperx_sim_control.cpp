@@ -4,12 +4,51 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 {
   RCLCPP_INFO(this->get_logger(), "Control node has started......");
 
+  current_state_ = PickState::MOVE_TO_SCAN;
 
   marker_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/aruco/marker_pose_base",
     10,
     std::bind(&PiperXSimControl::markerPoseCallback, this, std::placeholders::_1)
   );
+}
+
+void PiperXSimControl::initializeMoveIt()
+{
+  arm_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
+    shared_from_this(), "arm");
+
+  gripper_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
+    shared_from_this(), "gripper");
+}
+
+void PiperXSimControl::runStateMachine()
+{
+  switch (current_state_)
+  {
+    case PickState::MOVE_TO_SCAN:
+      RCLCPP_INFO(this->get_logger(), "State: MOVE_TO_SCAN");
+
+      moveArmJoints(scan_pose_joints_);
+
+      current_state_ = PickState::OPEN_GRIPPER;
+
+      break;
+
+    case PickState::OPEN_GRIPPER:
+      RCLCPP_INFO(this->get_logger(), "State: OPEN_GRIPPER");
+
+      moveGripperJoints(gripper_open_joints_);
+
+      current_state_ = PickState::WAIT_FOR_MARKER;
+
+      break;  
+
+    default:
+      RCLCPP_INFO(this->get_logger(), "State not implemented yet.");
+
+      break;
+  }
 }
 
 void PiperXSimControl::markerPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
@@ -24,18 +63,6 @@ void PiperXSimControl::markerPoseCallback(const geometry_msgs::msg::PoseStamped:
   );
 }
 
-void PiperXSimControl::mainJointMovement()
-{
-  arm_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
-            shared_from_this(), "arm");
-
-  gripper_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
-            shared_from_this(), "gripper");
-
-  moveArmJoints(scan_pose_joints_);
-
-  moveGripperJoints(gripper_open_joints_);
-}
 
 void PiperXSimControl::moveArmJoints(const std::vector<double> & joint_angles)
 {
@@ -71,7 +98,9 @@ int main(int argc, char ** argv)
 
   auto node = std::make_shared<PiperXSimControl>();
 
-  node->mainJointMovement();
+  node->initializeMoveIt();
+
+  node->runStateMachine();
 
   rclcpp::spin(node);
 

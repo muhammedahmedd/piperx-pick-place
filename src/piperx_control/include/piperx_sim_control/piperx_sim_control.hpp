@@ -13,9 +13,11 @@ public:
 
   ~PiperXSimControl() = default;
 
-  void markerPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+  void initializeMoveIt();
 
-  void mainJointMovement();
+  void runStateMachine();
+
+  void markerPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
 
   void moveArmJoints(const std::vector<double> & joint_angles);
 
@@ -23,6 +25,17 @@ public:
 
 
 private:
+
+  enum class PickState
+  {
+    MOVE_TO_SCAN,
+    OPEN_GRIPPER,
+    WAIT_FOR_MARKER,
+    MOVE_TO_PICK,
+    CLOSE_GRIPPER
+  };
+
+  PickState current_state_;
 
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr marker_pose_sub_;
 
