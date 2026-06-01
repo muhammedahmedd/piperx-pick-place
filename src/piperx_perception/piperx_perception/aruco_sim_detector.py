@@ -43,7 +43,7 @@ class ArucoSimDetector(Node):
             Image,
             "/isaac/rgb_raw",
             self.image_callback,
-            10
+            1
         )
 
         self.pose_pub = self.create_publisher(
@@ -59,7 +59,7 @@ class ArucoSimDetector(Node):
         )
 
         self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self, spin_thread=True)
 
         self.get_logger().info("Aruco sim detector started.")
 
@@ -80,8 +80,8 @@ class ArucoSimDetector(Node):
         
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
 
-        debug_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        cv2.imwrite("/workspace/piperx_ws/debug_frame.png", debug_frame)
+        # debug_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # cv2.imwrite("/workspace/piperx_ws/debug_frame.png", debug_frame)
 
         corners, ids, rejected = aruco.detectMarkers(
             frame,
