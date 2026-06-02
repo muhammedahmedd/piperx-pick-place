@@ -20,7 +20,7 @@ public:
   void runStateMachine();
 
   void moveTcpToMarker();
-  
+
   void moveArmJoints(const std::vector<double> & joint_angles);
 
   void moveGripperJoints(const std::vector<double> & joint_angles);

@@ -15,7 +15,7 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 
   has_marker_pose_ = false;
 
-  required_marker_samples_ = 45;
+  required_marker_samples_ = 25;
   marker_sample_count_ = 0;
 
   marker_sum_x_ = 0.0;
@@ -61,14 +61,6 @@ void PiperXSimControl::markerPoseCallback(const geometry_msgs::msg::PoseStamped:
     marker_pose_.pose.position.z = marker_sum_z_ / marker_sample_count_;
 
     has_marker_pose_ = true;
-
-    RCLCPP_INFO(
-      this->get_logger(),
-      "Marker average ready: x=%.3f, y=%.3f, z=%.3f",
-      marker_pose_.pose.position.x,
-      marker_pose_.pose.position.y,
-      marker_pose_.pose.position.z
-    );
   }
 }
 
@@ -80,17 +72,7 @@ void PiperXSimControl::initializeMoveIt()
   gripper_group_ = std::make_shared<moveit::planning_interface::MoveGroupInterface>(
     shared_from_this(), "gripper");
 
-  bool tcp_set = arm_group_->setEndEffectorLink("gripper_tcp");
-
-  if (tcp_set)
-  {
-    RCLCPP_INFO(
-      this->get_logger(),
-      "Arm end-effector link changed to: %s",
-      arm_group_->getEndEffectorLink().c_str()
-    );
-  }
-  else
+  if (!arm_group_->setEndEffectorLink("gripper_tcp"))
   {
     RCLCPP_ERROR(this->get_logger(), "Failed to set gripper_tcp as end-effector link.");
   }
@@ -122,7 +104,6 @@ void PiperXSimControl::runStateMachine()
       break; 
     
     case PickState::WAIT_FOR_MARKER:
-      RCLCPP_INFO(this->get_logger(), "State: WAIT_FOR_MARKER");
 
       if (has_marker_pose_)
       {
@@ -136,11 +117,7 @@ void PiperXSimControl::runStateMachine()
 
         current_state_ = PickState::MOVE_TO_PICK;
       }
-      else
-      {
-        RCLCPP_INFO(this->get_logger(), "No marker pose yet. Staying in WAIT_FOR_MARKER.");
-      }
-
+  
       break;
     
     case PickState::MOVE_TO_PICK:
@@ -150,6 +127,11 @@ void PiperXSimControl::runStateMachine()
 
       current_state_ = PickState::CLOSE_GRIPPER;
 
+      break;
+
+    case PickState::CLOSE_GRIPPER:
+      // TODO: close gripper around object
+      
       break;
 
     default:
@@ -172,26 +154,10 @@ void PiperXSimControl::moveTcpToMarker()
   target_pose.orientation.z = 0.0;
   target_pose.orientation.w = 0.0;
 
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Moving gripper_tcp to marker target: x=%.3f, y=%.3f, z=%.3f",
-    target_pose.position.x,
-    target_pose.position.y,
-    target_pose.position.z
-  );
-
   arm_group_->setStartStateToCurrentState();
   arm_group_->setPoseTarget(target_pose);
 
-  moveit::core::MoveItErrorCode plan_result = arm_group_->plan(arm_plan_);
-
-  RCLCPP_INFO(
-    this->get_logger(),
-    "MoveIt plan result code: %d",
-    plan_result.val
-  );
-
-  if (plan_result == moveit::core::MoveItErrorCode::SUCCESS)
+  if (arm_group_->plan(arm_plan_) == moveit::core::MoveItErrorCode::SUCCESS)
   {
     RCLCPP_INFO(this->get_logger(), "Pregrasp plan succeeded. Executing...");
     arm_group_->execute(arm_plan_);
@@ -214,7 +180,7 @@ void PiperXSimControl::moveArmJoints(const std::vector<double> & joint_angles)
   }
   else 
   {
-    RCLCPP_INFO(this->get_logger(), "Arm plan failed");
+    RCLCPP_ERROR(this->get_logger(), "Arm plan failed");
   }
 }
 
@@ -228,7 +194,7 @@ void PiperXSimControl::moveGripperJoints(const std::vector<double> & joint_angle
   }
   else 
   {
-    RCLCPP_INFO(this->get_logger(), "Gripper plan failed");
+    RCLCPP_ERROR(this->get_logger(), "Gripper plan failed");
   }
 }
 
@@ -240,21 +206,18 @@ int main(int argc, char ** argv)
 
   node->initializeMoveIt();
 
-  node->runStateMachine();  // MOVE_TO_SCAN
-  node->runStateMachine();  // OPEN_GRIPPER, then state becomes WAIT_FOR_MARKER
+  rclcpp::Rate rate = rclcpp::Rate(30);
 
-  rclcpp::Rate rate(30);
-
-  for (int i = 0; i < 400; i++)
+  while (rclcpp::ok())
   {
+    node->runStateMachine();
+
     rclcpp::spin_some(node);
+
     rate.sleep();
   }
 
-  node->runStateMachine();  // WAIT_FOR_MARKER: freeze averaged marker pose if ready
-  node->runStateMachine();  // MOVE_TO_PICK
-
   rclcpp::shutdown();
-  
+
   return 0;
 }
