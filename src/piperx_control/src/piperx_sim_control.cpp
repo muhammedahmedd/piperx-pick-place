@@ -138,12 +138,21 @@ void PiperXSimControl::runStateMachine()
 
       moveGripperJoints(gripper_grasp_joints_);
 
-       current_state_ = PickState::DONE;
+      current_state_ = PickState::LIFT;
 
       break;
-    
+
+    case PickState::LIFT:
+
+      moveArmJoints(scan_pose_joints_);
+
+      current_state_ = PickState::DONE;
+        
+      break;
+
     case PickState::DONE:
-        break;
+        
+      break;
 
     default:
       RCLCPP_INFO(this->get_logger(), "State not implemented yet.");

@@ -35,6 +35,7 @@ private:
     WAIT_FOR_MARKER,
     MOVE_TO_PICK,
     CLOSE_GRIPPER,
+    LIFT,
     DONE
   };
 
