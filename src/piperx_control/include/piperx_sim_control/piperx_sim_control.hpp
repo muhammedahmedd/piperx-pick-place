@@ -34,7 +34,8 @@ private:
     OPEN_GRIPPER,
     WAIT_FOR_MARKER,
     MOVE_TO_PICK,
-    CLOSE_GRIPPER
+    CLOSE_GRIPPER,
+    DONE
   };
 
   PickState current_state_;
@@ -63,6 +64,8 @@ private:
   std::vector<double> scan_pose_joints_ = {0.0, 0.373, -1.283, 1.315, 0.0, 0.0};
 
   std::vector<double> gripper_open_joints_ = {0.050, -0.050};
+
+  std::vector<double> gripper_grasp_joints_;
 };
 
 #endif 

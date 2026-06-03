@@ -5,12 +5,6 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 {
   RCLCPP_INFO(this->get_logger(), "Control node has started......");
 
-  marker_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    "/aruco/marker_pose_base",
-    1,
-    std::bind(&PiperXSimControl::markerPoseCallback, this, std::placeholders::_1)
-  );
-
   current_state_ = PickState::MOVE_TO_SCAN;
 
   has_marker_pose_ = false;
@@ -21,6 +15,15 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
   marker_sum_x_ = 0.0;
   marker_sum_y_ = 0.0;
   marker_sum_z_ = 0.0;
+
+  // Tuned for grasping the simulated cube (5 cm sides).
+  gripper_grasp_joints_ = {0.015, -0.015};
+
+  marker_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "/aruco/marker_pose_base",
+    1,
+    std::bind(&PiperXSimControl::markerPoseCallback, this, std::placeholders::_1)
+  );
 
 }
 
@@ -88,7 +91,7 @@ void PiperXSimControl::runStateMachine()
       moveArmJoints(scan_pose_joints_);
 
       RCLCPP_INFO(this->get_logger(), "Waiting for arm/camera to settle...");
-      rclcpp::sleep_for(std::chrono::seconds(3));
+      rclcpp::sleep_for(std::chrono::seconds(8));
 
       current_state_ = PickState::OPEN_GRIPPER;
 
@@ -109,7 +112,7 @@ void PiperXSimControl::runStateMachine()
       {
         RCLCPP_INFO(
           this->get_logger(),
-          "Target marker pose frozen: x=%.3f, y=%.3f, z=%.3f",
+          "Target marker pose: x=%.3f, y=%.3f, z=%.3f",
           marker_pose_.pose.position.x,
           marker_pose_.pose.position.y,
           marker_pose_.pose.position.z
@@ -124,15 +127,23 @@ void PiperXSimControl::runStateMachine()
       RCLCPP_INFO(this->get_logger(), "State: MOVE_TO_PICK");
 
       moveTcpToMarker();
+      rclcpp::sleep_for(std::chrono::seconds(5));
 
       current_state_ = PickState::CLOSE_GRIPPER;
 
       break;
 
     case PickState::CLOSE_GRIPPER:
-      // TODO: close gripper around object
-      
+      RCLCPP_INFO(this->get_logger(), "State: CLOSE_GRIPPER");
+
+      moveGripperJoints(gripper_grasp_joints_);
+
+       current_state_ = PickState::DONE;
+
       break;
+    
+    case PickState::DONE:
+        break;
 
     default:
       RCLCPP_INFO(this->get_logger(), "State not implemented yet.");
