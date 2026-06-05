@@ -5,7 +5,7 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 {
   RCLCPP_INFO(this->get_logger(), "Control node has started......");
 
-  current_state_ = PickState::MOVE_TO_SCAN;
+  current_state_ = PickState::OPEN_GRIPPER;
 
   has_marker_pose_ = false;
 
@@ -88,12 +88,21 @@ void PiperXSimControl::runStateMachine()
 {
   switch (current_state_)
   {
+    case PickState::OPEN_GRIPPER:
+      RCLCPP_INFO(this->get_logger(), "State: OPEN_GRIPPER");
+
+      moveGripperJoints(gripper_open_joints_);
+
+      current_state_ = PickState::MOVE_TO_SCAN;
+
+      break; 
+
     case PickState::MOVE_TO_SCAN:
       RCLCPP_INFO(this->get_logger(), "State: MOVE_TO_SCAN");
 
       if (moveArmJoints(scan_pose_joints_))
       {
-        current_state_ = PickState::OPEN_GRIPPER;
+        current_state_ = PickState::WAIT_FOR_MARKER;
       }
       else
       {
@@ -101,15 +110,6 @@ void PiperXSimControl::runStateMachine()
       } 
 
       break;
-
-    case PickState::OPEN_GRIPPER:
-      RCLCPP_INFO(this->get_logger(), "State: OPEN_GRIPPER");
-
-      moveGripperJoints(gripper_open_joints_);
-
-      current_state_ = PickState::WAIT_FOR_MARKER;
-
-      break; 
     
     case PickState::WAIT_FOR_MARKER:
 
