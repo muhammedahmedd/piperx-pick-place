@@ -86,6 +86,10 @@ void PiperXSimControl::initializeMoveIt()
   arm_group_->setMaxVelocityScalingFactor(1);
   arm_group_->setMaxAccelerationScalingFactor(1);
 
+  arm_group_->setGoalJointTolerance(0.001);
+  arm_group_->setGoalPositionTolerance(0.001);
+  arm_group_->setGoalOrientationTolerance(0.01);
+
   if (!arm_group_->setEndEffectorLink("gripper_tcp"))
   {
     RCLCPP_ERROR(this->get_logger(), "Failed to set gripper_tcp as end-effector link.");
@@ -172,7 +176,8 @@ void PiperXSimControl::runStateMachine()
 
       if (moveTcpToPlace())
       {
-        rclcpp::sleep_for(std::chrono::seconds(10));
+        // to be deleted
+        rclcpp::sleep_for(std::chrono::seconds(6));
 
         moveGripperJoints(gripper_open_joints_);
 
@@ -247,8 +252,8 @@ bool PiperXSimControl::moveTcpToPlace()
   target_pose.position.x = place_pose_.pose.position.x;
   target_pose.position.y = place_pose_.pose.position.y;
 
-  // The place marker is on the table, so do not move the TCP exactly to the marker surface.
-  target_pose.position.z = place_pose_.pose.position.z + 0.050;
+  // The place marker is on the table, so we do not move the TCP exactly to the marker surface.
+  target_pose.position.z = 0.080;
 
   target_pose.orientation.x = 0.0;
   target_pose.orientation.y = 1.0;

@@ -25,12 +25,12 @@ class ArucoSimDetector(Node):
         self.aruco_params = aruco.DetectorParameters_create()
 
         # Physical marker side length in meters
-        self.marker_size = 0.04
+        self.marker_size = 0.055
 
         self.camera_matrix = None
         self.dist_coeffs = None
         self.printed_camera_info = False
-    
+
         self.camera_info_sub = self.create_subscription(
             CameraInfo,
             "/isaac/camera_info",
@@ -79,9 +79,6 @@ class ArucoSimDetector(Node):
 
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
 
-        # debug_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        # cv2.imwrite("/workspace/piperx_ws/debug_frame.png", debug_frame)
-
         corners, ids, rejected = aruco.detectMarkers(
             frame,
             self.aruco_dict,
@@ -104,7 +101,7 @@ class ArucoSimDetector(Node):
         for i, marker_id in enumerate(detected_ids):
             rvec = rvecs[i][0]
             tvec = tvecs[i][0]
-
+ 
             self.publish_marker_pose_base(marker_id, rvec, tvec, msg)
 
     def publish_marker_pose_base(self, marker_id, rvec, tvec, image_msg):
@@ -115,8 +112,9 @@ class ArucoSimDetector(Node):
                 "base_link",
                 "Camera",
                 image_time,
-                timeout=Duration(seconds=0.5)
+                timeout=Duration(seconds=4.0)
             )
+
         except Exception as e:
             self.get_logger().warn(f"Could not transform base_link to Camera: {e}")
             return
@@ -168,6 +166,7 @@ class ArucoSimDetector(Node):
             self.get_logger().info(
                 "Published cube marker ID 0 pose to /aruco/cube_pose_base"
             )
+
         elif marker_id == 1:
             self.place_pose_pub.publish(pose_msg)
             self.get_logger().info(
