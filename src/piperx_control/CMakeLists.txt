@@ -17,6 +17,8 @@ add_executable(piperx_sim_control src/piperx_sim_control.cpp)
 ament_target_dependencies(piperx_sim_control
   rclcpp
   geometry_msgs
+  tf2_ros
+  tf2_geometry_msgs
   moveit_ros_planning_interface
 )
 

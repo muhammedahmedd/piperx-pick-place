@@ -110,8 +110,6 @@ void PiperXSimControl::runStateMachine()
 
       if (moveArmJoints(scan_pose_joints_))
       {
-        // to be deleted
-        rclcpp::sleep_for(std::chrono::seconds(5));
         current_state_ = PickState::WAIT_FOR_MARKERS;
       }
       else
@@ -175,7 +173,7 @@ void PiperXSimControl::runStateMachine()
       if (moveTcpToPlace())
       {
         // to be deleted
-        rclcpp::sleep_for(std::chrono::seconds(5));
+        rclcpp::sleep_for(std::chrono::seconds(8));
 
         moveGripperJoints(gripper_open_joints_);
 
