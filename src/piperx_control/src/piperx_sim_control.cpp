@@ -22,7 +22,7 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 
   arm_is_moving_ = true;
 
-  settle_velocity_threshold_ = 0.025;
+  settle_velocity_threshold_ = 0.033;
 
   cube_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/aruco/cube_pose_base",
@@ -220,9 +220,15 @@ void PiperXSimControl::runStateMachine()
       RCLCPP_INFO(this->get_logger(), "State: GRASP");
 
       moveGripperJoints(gripper_grasp_joints_);
-      moveArmJoints(scan_pose_joints_);
 
-      current_state_ = PickState::PLACE;
+      if (moveArmJoints(lift_pose_joints_))
+      {
+        current_state_ = PickState::PLACE;
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Lift pose failed, retrying...");
+      }
 
       break;
 
@@ -324,7 +330,7 @@ bool PiperXSimControl::moveTcpToPlace()
   target_pose.position.y = place_pose_.pose.position.y;
 
   // The place marker is on the table, so we do not move the TCP exactly to the marker surface.
-  target_pose.position.z = 0.045;
+  target_pose.position.z = 0.040;
 
   target_pose.orientation.x = 0.0;
   target_pose.orientation.y = 1.0;
