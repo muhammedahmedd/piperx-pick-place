@@ -220,6 +220,7 @@ void PiperXSimControl::runStateMachine()
       RCLCPP_INFO(this->get_logger(), "State: GRASP");
 
       moveGripperJoints(gripper_grasp_joints_);
+      moveArmJoints(scan_pose_joints_);
 
       current_state_ = PickState::PLACE;
 
