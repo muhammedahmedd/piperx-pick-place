@@ -73,24 +73,24 @@ private:
 
   moveit::planning_interface::MoveGroupInterface::Plan gripper_plan_;
 
+  // joint-space poses used by the pick-and-place state machine
   std::vector<double> scan_pose_joints_ = {0.0, 0.373, -1.283, 1.315, 0.0, 0.0};
-
   std::vector<double> lift_pose_joints_ = {0.0, 1.7628, -1.8326, 1.5708, 0.0, 0.0};
 
+  // gripper joint targets for simulated open and grasp positions
   std::vector<double> gripper_open_joints_ = {0.050, -0.050};
-
   std::vector<double> gripper_grasp_joints_;
 
+  // state-machine flags to prevent repeated motion commands
   bool scan_motion_done_;
-
   bool place_motion_done_;
 
+  // robot motion-settling feedback
   bool has_joint_state_;
-
   bool arm_is_moving_;
 
+  // Tunable parameters
   double settle_velocity_threshold_;
-
   double place_tcp_z_;
 };
 

@@ -22,11 +22,13 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 
   arm_is_moving_ = true;
 
+  // threshold used to decide when Isaac arm joints are slow enough to be considered settled
   this->declare_parameter<double>("settle_velocity_threshold", 0.033);
 
   settle_velocity_threshold_ =
     this->get_parameter("settle_velocity_threshold").as_double();
 
+  // TCP release height above the table (place marker)  
   this->declare_parameter<double>("place_tcp_z", 0.050);
 
   place_tcp_z_ =
