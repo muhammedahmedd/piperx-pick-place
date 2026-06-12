@@ -90,6 +90,8 @@ private:
   bool arm_is_moving_;
 
   double settle_velocity_threshold_;
+
+  double place_tcp_z_;
 };
 
 #endif 

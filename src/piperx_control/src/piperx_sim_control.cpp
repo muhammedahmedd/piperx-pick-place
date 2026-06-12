@@ -27,11 +27,10 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
   settle_velocity_threshold_ =
     this->get_parameter("settle_velocity_threshold").as_double();
 
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Settle velocity threshold: %.3f",
-    settle_velocity_threshold_
-  );
+  this->declare_parameter<double>("place_tcp_z", 0.050);
+
+  place_tcp_z_ =
+    this->get_parameter("place_tcp_z").as_double();
 
   cube_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/aruco/cube_pose_base",
@@ -330,7 +329,7 @@ bool PiperXSimControl::moveTcpToPlace()
   target_pose.position.y = place_pose_.pose.position.y;
 
   // The place marker is on the table, so we do not move the TCP exactly to the marker surface.
-  target_pose.position.z = 0.040;
+  target_pose.position.z = place_tcp_z_;
 
   target_pose.orientation.x = 0.0;
   target_pose.orientation.y = 1.0;

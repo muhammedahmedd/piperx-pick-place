@@ -6,6 +6,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     settle_velocity_threshold = LaunchConfiguration('settle_velocity_threshold')
+    place_tcp_z = LaunchConfiguration('place_tcp_z')
     marker_size = LaunchConfiguration('marker_size')
 
     return LaunchDescription([
@@ -13,6 +14,12 @@ def generate_launch_description():
             'settle_velocity_threshold',
             default_value='0.033',
             description='Joint velocity threshold used to decide when the arm is settled'
+        ),
+
+        DeclareLaunchArgument(
+            'place_tcp_z',
+            default_value='0.040',
+            description='TCP z height used when placing the object'
         ),
 
         DeclareLaunchArgument(
@@ -37,7 +44,10 @@ def generate_launch_description():
             name='piperx_sim_control',
             output='screen',
             parameters=[
-                {'settle_velocity_threshold': settle_velocity_threshold}
+                {
+                'settle_velocity_threshold': settle_velocity_threshold,
+                'place_tcp_z': place_tcp_z
+                }
             ]
         )
     ])
