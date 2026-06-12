@@ -221,6 +221,13 @@ void PiperXSimControl::runStateMachine()
 
       moveGripperJoints(gripper_grasp_joints_);
 
+      current_state_ = PickState::LIFT;
+
+      break;
+
+    case PickState::LIFT:
+      RCLCPP_INFO(this->get_logger(), "State: LIFT");
+
       if (moveArmJoints(lift_pose_joints_))
       {
         current_state_ = PickState::PLACE;

@@ -44,6 +44,7 @@ private:
     WAIT_FOR_MARKERS,
     MOVE_TO_PICK,
     GRASP,
+    LIFT,
     PLACE,
     DONE
   };
