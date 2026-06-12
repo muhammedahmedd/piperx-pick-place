@@ -22,7 +22,16 @@ PiperXSimControl::PiperXSimControl() : Node("piperx_sim_control")
 
   arm_is_moving_ = true;
 
-  settle_velocity_threshold_ = 0.033;
+  this->declare_parameter<double>("settle_velocity_threshold", 0.033);
+
+  settle_velocity_threshold_ =
+    this->get_parameter("settle_velocity_threshold").as_double();
+
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Settle velocity threshold: %.3f",
+    settle_velocity_threshold_
+  );
 
   cube_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/aruco/cube_pose_base",
@@ -57,14 +66,6 @@ void PiperXSimControl::cubePoseCallback(const geometry_msgs::msg::PoseStamped::S
 
   cube_pose_ = *msg;
   has_cube_pose_ = true;
-
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Received cube marker pose: x=%.3f, y=%.3f, z=%.3f",
-    cube_pose_.pose.position.x,
-    cube_pose_.pose.position.y,
-    cube_pose_.pose.position.z
-  );
 }
 
 void PiperXSimControl::placePoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
@@ -81,14 +82,6 @@ void PiperXSimControl::placePoseCallback(const geometry_msgs::msg::PoseStamped::
 
   place_pose_ = *msg;
   has_place_pose_ = true;
-
-  RCLCPP_INFO(
-    this->get_logger(),
-    "Received place marker pose: x=%.3f, y=%.3f, z=%.3f",
-    place_pose_.pose.position.x,
-    place_pose_.pose.position.y,
-    place_pose_.pose.position.z
-  );
 }
 
 void PiperXSimControl::isaacJointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg)
