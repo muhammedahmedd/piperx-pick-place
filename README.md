@@ -88,6 +88,18 @@ colcon build
 source install/setup.bash
 ```
 
+## Isaac Sim scene
+
+The Isaac Sim scene used for this project is included in the `isaac_sim/` folder.
+
+Open the scene in Isaac Sim before launching MoveIt:
+
+```text
+isaac_sim/piper_scene.usd
+```
+
+Make sure the USD scene has the correct asset path references for the Piper X robot arm and the ArUco marker images. The marker images should stay in the same folder as the USD scene so the scene can load them correctly.
+
 ## Run MoveIt
 
 Start the Isaac Sim scene first. After Isaac Sim is running, launch MoveIt and RViz:
