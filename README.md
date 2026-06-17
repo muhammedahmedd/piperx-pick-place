@@ -6,11 +6,13 @@ In Isaac Sim, the robot detects a cube with an ArUco tag on it, picks it up, and
 
 The pick-and-place sequence is defined using a finite state machine (FSM), which moves the robot through the main stages of scanning, picking, lifting, placing, and completing the task in smaller steps.
 
-oveIt 2 is used for motion planning and execution, allowing the robot to plan and execute arm motions to the detected cube pose and target placement pose, while Isaac Sim provides the simulated robot, camera, and the scene.
+MoveIt 2 is used for motion planning and execution, allowing the robot to plan and execute arm motions to the detected cube pose and target placement pose, while Isaac Sim provides the simulated robot, camera, and the scene.
 
-The image below shows key frames from the Isaac Sim pick-and-place sequence.
+A few snapshots from the cube pickup and placement in Isaac Sim are shown below:
 
 ![Pick-and-place sequence](images/pick_place_sequence.png)
+
+Full demo video: [Watch the pick-and-place run](https://drive.google.com/file/d/1TQeUmfrOiSdoJSGP4OHmY3h19bLHFgn1/view?usp=sharing)
 
 ## Clone the repository
 
@@ -23,7 +25,7 @@ cd ~/piperx_ws
 
 This project depends on a Piper X-focused fork of `agx_arm_sim`. This fork contains the Piper X MoveIt configuration used with Isaac Sim.
 
-I modified this fork to synchronize the MoveIt setup with Isaac Sim simulation time. This includes updating MoveIt-related launch files so nodes such as `move_group`, `robot_state_publisher`, and `ros2_control_node` use Isaac Sim clock time from `/clock`.
+This fork was modified to synchronize the MoveIt setup with Isaac Sim simulation time. This includes updating MoveIt-related launch files so nodes such as `move_group`, `robot_state_publisher`, and `ros2_control_node` use Isaac Sim clock time from `/clock`.
 
 This fork also points to my Piper X URDF fork, where I added a fixed `gripper_tcp` frame. The `gripper_tcp` frame is used as the grasp reference frame for the gripper during pick-and-place.
 
