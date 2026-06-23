@@ -15,6 +15,10 @@ RUN apt update && apt install -y \
 
 WORKDIR /workspace
 
+RUN echo 'source /opt/ros/humble/setup.bash' >> /root/.bashrc
+
+RUN echo '[ -f /workspace/piperx_sim_ws/install/setup.bash ] && source /workspace/piperx_sim_ws/install/setup.bash' >> /root/.bashrc
+
 COPY ros_entrypoint.sh /
 
 RUN chmod +x /ros_entrypoint.sh
